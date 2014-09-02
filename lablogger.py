@@ -92,8 +92,7 @@ class LoggableItem(object):
 class MarkdownDocument(object):
     def __init__(self,path):
         self.path = path
-        self.html = ""
-        self.markdown = ""
+        self._rawMarkdown = ""
         self.soup = BeautifulSoup()
         
         try:
@@ -101,18 +100,29 @@ class MarkdownDocument(object):
         except:
             pass
     
+    def _repr_html_(self):
+        return self.soup.prettify()
+    
+    @property
+    def markdown(self):
+        return html2text.html2text(self.soup.prettify())
+    
     def _readFromFS(self):
         with file(self.path,'r') as f:
-            self.markdown = f.read()
+            self._rawMarkdown = f.read()
             md = markdown.Markdown()
-            self.html = md.convert(self.markdown)
-            self.soup = BeautifulSoup(self.html)
+            html = md.convert(self._rawMarkdown)
+            self.soup = BeautifulSoup(html)
             
-    def _repr_html_(self):
-        return self.html
-            
-        
-
+    
+    
+    def _writeToFS(self):
+        with file(self.path,'w') as f:
+            if self.markdown is not self._rawMarkdown:
+                f.write(self.markdown)
+    
+    def save(self):
+        self._writeToFS()
 
 
 class FrontMatterDocument(MarkdownDocument):
@@ -127,15 +137,19 @@ class FrontMatterDocument(MarkdownDocument):
 
 class LogMessage(object):
     def __init__(self,header=None, content=None):
-        self.header = header
-        self.content = content
+        self._header = header
+        self._content = content
     
     def _repr_html_(self):
-        soup = BeautifulSoup();
-        soup.append(self.header)
-        for c in self.content:
-            soup.append(c)
-        return soup
+        return self.html
+    
+    @property
+    def html(self):
+        return self._header.prettify() + "".join([c.prettify() for c in self._content])
+    
+    @property
+    def contentMarkdown(self):
+        return html2text.html2text(self.html)
         
 
 
