@@ -7,6 +7,22 @@ import html2text
 from IPython.display import HTML
 
 
+class LoggableItemStore(object):
+    def __init__(self,path):
+        self.path = path
+        self.children = []
+        self._retrieveChildrenFromFS()
+    
+    def _retrieveChildrenFromFS(self):
+        self.children = [LoggableItem(os.path.join(self.path,d),parent=self) for d in os.listdir(self.path) if os.path.isdir(os.path.join(self.path,d)) and not d.startswith(".")]
+        
+    def iterChildrenRecursive(self):
+        for child in self.children:
+            yield child
+            for subchild in child.iterChildrenRecursive():
+                yield subchild
+
+
 class LoggableItem(object):
     
     re_name_acronym = re.compile(r"^(.*?)(?:\s\((.*)\))?$")
@@ -90,7 +106,6 @@ class LoggableItem(object):
 
 
 class MarkdownDocument(object):
-    
     def __init__(self,path):
         self.path = path
         self._rawMarkdown = ""
@@ -218,6 +233,8 @@ def writeTags(soup,tags):
         p_tags.string = tagsString
     else:
         h2_tags.insert_after(r"<p>%s</p>" % tagsString)
+
+
 
 
 
