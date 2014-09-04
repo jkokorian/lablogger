@@ -102,7 +102,10 @@ class LoggableItem(object):
     def frontMatterFile(self):
         return os.path.join(self.path,str(self)+".md")
             
-
+    
+    
+        
+        
 
 
 class MarkdownDocument(object):
@@ -163,6 +166,10 @@ class LogMessage(object):
     def __init__(self,header=None, content=None):
         self._header = header
         self._content = content
+        self._timeIsSpecified = False
+        self.datetime = None
+        
+        self._getDatetimeFromHeader()
     
     def _repr_html_(self):
         return self.html
@@ -174,7 +181,23 @@ class LogMessage(object):
     @property
     def contentMarkdown(self):
         return html2text.html2text(self.html)
-        
+    
+    def _getDatetimeFromHeader(self):
+        #TODO: Very ugly nested try except!!! Do it properly! 
+        try:
+            self.datetime = strptime(self._header.text,r"%Y-%m-%d %H:%M")
+            self._timeIsSpecified = True
+        except:
+            try:
+                self.datetime = strptime(self._header.text,r"%Y-%m-%d %H:%M:%S")
+                self._timeIsSpecified = True
+            except:
+                try:
+                    self.datetime = strptime(self._header.text,r"%Y-%m-%d")
+                    self._timeIsSpecified = False
+                except:
+                    self.datetime = None
+                    self._timeIsSpecified = False
 
 
 
@@ -207,7 +230,13 @@ class LogDocument(MarkdownDocument):
     def template(self):
         return "# %s Log\n\n" % self.filename.strip(".log.md")
             
+    
+    def newLogMessage(self,message,datetime=None):
+        """
+        Add a new logmessage for this item.
+        """
         
+        pass
 
 
 
@@ -233,6 +262,10 @@ def writeTags(soup,tags):
         p_tags.string = tagsString
     else:
         h2_tags.insert_after(r"<p>%s</p>" % tagsString)
+
+
+
+
 
 
 
