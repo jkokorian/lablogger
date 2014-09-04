@@ -90,6 +90,7 @@ class LoggableItem(object):
 
 
 class MarkdownDocument(object):
+    
     def __init__(self,path):
         self.path = path
         self._rawMarkdown = ""
@@ -98,7 +99,9 @@ class MarkdownDocument(object):
         try:
             self._readFromFS()
         except:
-            pass
+            self._rawMarkdown = self.template
+        
+        self._parseRawMarkdown()
     
     def _repr_html_(self):
         return self.soup.prettify()
@@ -109,30 +112,36 @@ class MarkdownDocument(object):
     
     def _readFromFS(self):
         with file(self.path,'r') as f:
-            self._rawMarkdown = f.read()
-            md = markdown.Markdown()
-            html = md.convert(self._rawMarkdown)
-            self.soup = BeautifulSoup(html)
-            
-    
+            self._rawMarkdown = f.read()    
     
     def _writeToFS(self):
         with file(self.path,'w') as f:
             if self.markdown is not self._rawMarkdown:
                 f.write(self.markdown)
     
+    def _parseRawMarkdown(self):
+        md = markdown.Markdown()
+        html = md.convert(self._rawMarkdown)
+        self.soup = BeautifulSoup(html)
+    
     def save(self):
         self._writeToFS()
-
-
+        
+    @property
+    def template(self):
+        return ""
+    
+    @property
+    def filename(self):
+        return os.path.split(self.path)[1]
+        
+    
+    
 class FrontMatterDocument(MarkdownDocument):
     def __init__(self,path):
         MarkdownDocument.__init__(self,path)
         
         self.tags = readTags(self.soup)
-    
-    
-
 
 
 class LogMessage(object):
@@ -178,6 +187,10 @@ class LogDocument(MarkdownDocument):
                         
         if len(logHeaders) == 1:
             self.logMessages.append(LogMessage(logHeaders[0],logHeaders[0].find_next_siblings()))
+    
+    @property
+    def template(self):
+        return "# %s Log\n\n" % self.filename.strip(".log.md")
             
         
 
