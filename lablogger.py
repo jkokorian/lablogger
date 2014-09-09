@@ -102,10 +102,6 @@ class LoggableItem(object):
     def frontMatterFile(self):
         return os.path.join(self.path,str(self)+".md")
             
-    
-    
-        
-        
 
 
 class MarkdownDocument(object):
